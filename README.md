@@ -56,5 +56,3 @@ Upload an `.npz` with `optical` (6,H,W) reflectance [B2,B3,B4,B8,B11,B12],
 ## Authors
 Rumita Mandal and Guruansh Singh, Professional University, Punjab, India.
 
-## Licence
-MIT (add a LICENSE file)
