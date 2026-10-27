@@ -19,4 +19,35 @@ A web app turns the predictions into flood, drought and urban risk indices.
 | Sensors | Pre-trained mIoU | From scratch mIoU |
 |---|---|---|
 | All | 0.790 | 0.750 |
-| Optical only | 0.648
+| Optical only | 0.648 | 0.522 |
+| SAR only | 0.725 | 0.676 |
+
+## Quick start
+```bash
+pip install -r requirements.txt
+python -m uvicorn terrascope.server.app:app --port 8000
+```
+Open http://localhost:8000. Trained weights are included in `artifacts/`.
+
+### Retrain (about 35 min on CPU)
+```bash
+./run_training.sh
+```
+
+## Your own data
+Upload an `.npz` with `optical` (6,H,W) reflectance [B2,B3,B4,B8,B11,B12],
+`sar` (2,H,W) in dB, and `dem` (2,H,W) [elevation m, slope °].
+
+## Project layout
+| Path | Purpose |
+|---|---|
+| `terrascope/core/` | simulator, model, training, evaluation, inference |
+| `terrascope/server/` | FastAPI backend |
+| `terrascope/web/` | frontend |
+| `artifacts/` | trained checkpoints, logs, metrics |
+
+## Authors
+Rumita Mandal and Guruansh Singh, Professional University, Punjab, India.
+
+## Licence
+MIT (add a LICENSE file)
