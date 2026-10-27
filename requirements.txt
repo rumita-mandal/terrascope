@@ -1,0 +1,8 @@
+torch>=2.2
+numpy
+scipy
+matplotlib
+pillow
+fastapi
+uvicorn[standard]
+python-multipart
