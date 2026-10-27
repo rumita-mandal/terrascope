@@ -1,3 +1,10 @@
+   ---
+   title: TerraScope
+   sdk: docker
+   app_port: 7860
+   ---
+
+
 # TerraScope
 
 A compact multimodal vision transformer (**TerraFM**, 0.69M parameters) for Earth observation.
