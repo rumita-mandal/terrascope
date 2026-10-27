@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TerraScope — Earth observation foundation model</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%230E1B2B'/%3E%3Cpath d='M4 19c5-6 9 3 14-3s7-2 10-5' stroke='%2321C6D6' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Hanken+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="#explore" aria-label="TerraScope">
+    <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="#0E1B2B"/><path d="M3 20c5-7 9 3 14-3s7-2 12-6" stroke="#21C6D6" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M5 25c4-4 8 1 12-2s6-1 10-4" stroke="#F2B14C" stroke-width="2" fill="none" stroke-linecap="round" opacity=".9"/></svg>
+    <span>TerraScope</span>
+  </a>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-page="explore" aria-selected="true">Explorer</button>
+    <button role="tab" data-page="bench" aria-selected="false">Benchmarks</button>
+    <button role="tab" data-page="model" aria-selected="false">Model</button>
+  </nav>
+  <div class="status" id="status"><i class="dot"></i><span>Starting…</span></div>
+</header>
+
+<main>
+<!-- ================= EXPLORER ================= -->
+<section id="page-explore" class="page active">
+  <div class="lede">
+    <h1>One model, three sensors, any sky.</h1>
+    <p>Change the weather, the flood, the drought, or switch sensors off. TerraFM re-reads the same landscape from whatever is left and maps land cover, floodwater and vegetation health.</p>
+  </div>
+
+  <div class="workbench">
+    <aside class="rail" aria-label="Scenario controls">
+      <h2>Scene</h2>
+      <div class="seedrow">
+        <label for="seed">Seed</label>
+        <input id="seed" type="number" value="7" min="0" max="999999">
+        <button class="ghost" id="shuffle" title="Random scene">Shuffle</button>
+      </div>
+      <ul class="presets" id="presets"></ul>
+
+      <h2>Conditions</h2>
+      <div class="slider"><label for="flood">Flood <output id="o-flood">0.55</output></label><input id="flood" type="range" min="0" max="1" step="0.05" value="0.55"></div>
+      <div class="slider"><label for="cloud">Cloud cover <output id="o-cloud">0.40</output></label><input id="cloud" type="range" min="0" max="1" step="0.05" value="0.40"></div>
+      <div class="slider"><label for="drought">Drought <output id="o-drought">0.30</output></label><input id="drought" type="range" min="0" max="1" step="0.05" value="0.30"></div>
+
+      <h2>Sensors fed to the model</h2>
+      <div class="sensors" id="sensors"></div>
+
+      <h2>Your own data</h2>
+      <div class="filebox">
+        <label class="btn" for="file">Upload scene (.npz)</label>
+        <input id="file" type="file" accept=".npz" hidden>
+        <a href="/api/sample.npz" class="link">Download a sample file</a>
+        <p class="hint">Arrays: <code>optical</code> (6×H×W reflectance), <code>sar</code> (2×H×W dB), <code>dem</code> (2×H×W metres, degrees). 32–256 px.</p>
+      </div>
+    </aside>
+
+    <section class="stage" aria-label="Map viewer">
+      <div class="stagehead">
+        <div><strong id="layer-title">—</strong><span id="layer-sub"></span></div>
+        <div class="stagebtns">
+          <button class="ghost" id="cmp-btn" aria-pressed="false">Compare</button>
+          <a class="ghost" id="export" href="#" download>Export .npz</a>
+        </div>
+      </div>
+      <div class="viewer" id="viewer">
+        <img id="img-base" alt="Map layer" draggable="false">
+        <img id="img-over" alt="" draggable="false">
+        <div class="divider" id="divider" hidden><span></span></div>
+        <div class="tag tag-l" id="tag-l" hidden></div>
+        <div class="tag tag-r" id="tag-r" hidden></div>
+        <div class="offline" id="offline" hidden>Sensor off — not fed to the model</div>
+        <div class="cross" id="cross" hidden></div>
+        <div class="busy" id="busy"><span></span></div>
+      </div>
+      <div class="readout" id="readout">Hover the map to read values.</div>
+      <div class="legend" id="legend"></div>
+      <div class="strip" id="strip" role="tablist" aria-label="Layers"></div>
+    </section>
+
+    <aside class="findings" aria-label="Environmental findings">
+      <h2>Environmental risk</h2>
+      <div class="risk" id="risk"></div>
+      <h2>Land cover</h2>
+      <div class="comp" id="comp"></div>
+      <h2>What the model sees</h2>
+      <ul class="insights" id="insights"></ul>
+      <h2 id="acc-h">Against ground truth</h2>
+      <table class="acc" id="acc"></table>
+      <p class="fine" id="timing"></p>
+    </aside>
+  </div>
+</section>
+
+<!-- ================= BENCHMARKS ================= -->
+<section id="page-bench" class="page">
+  <div class="lede"><h1 id="b-title">Pretraining pays off where labels are scarce.</h1><p id="b-sub">Held-out simulator scenes the model never saw. Both models share one architecture and the same 300 labelled scenes.</p></div>
+  <div id="bench-body" class="bench"></div>
+</section>
+
+<!-- ================= MODEL ================= -->
+<section id="page-model" class="page">
+  <div class="lede"><h1>How TerraFM works</h1><p>A small multimodal vision transformer that learns the physics linking optical, radar and terrain before it ever sees a label.</p></div>
+  <div class="modelpage" id="model-body"></div>
+</section>
+</main>
+
+<footer class="foot">TerraScope trains and evaluates on a physically motivated simulator of Sentinel-2 / Sentinel-1 / DEM scenes. Results show the method works end to end; they are not claims about real-world accuracy. Swap in real tiles through the .npz upload or the training pipeline.</footer>
+<script src="/static/app.js" type="module"></script>
+</body>
+</html>
